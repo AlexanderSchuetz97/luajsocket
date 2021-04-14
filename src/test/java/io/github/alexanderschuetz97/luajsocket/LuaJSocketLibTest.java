@@ -389,7 +389,6 @@ public class LuaJSocketLibTest {
     }
 
     @Test
-    //@Ignore
     public void testTime() {
         Varargs res = globals.load("print(tostring(require('socket').gettime()))").invoke();
     }
