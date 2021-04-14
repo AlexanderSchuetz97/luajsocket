@@ -7,7 +7,7 @@ A copy of the GNU General Public License Version 3 can be found in the COPYING f
 
 Luajsocket contains components sourced from the luasocket library. <br>
 Those components are all contained within the folder "src/main/lua/luasocket".<br>
-All components are released under the LuaSocket 3.0 license. <br>
+All files in the folder "src/main/lua/luasocket" are released under the LuaSocket 3.0 license.<br>
 A copy of the LuaSocket 3.0 license can be found in the src/main/lua/luasocket/LICENSE file.<br>
 For more information regarding luasocket see:<br>
 https://github.com/diegonehab/luasocket/
