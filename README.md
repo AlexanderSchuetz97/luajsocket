@@ -70,7 +70,7 @@ local x = 1
 -- set a breakpoint before this print in the IDE
 print(x) 
 ````
-#####Further info on using mobdebug to debug luaj
+##### Further info on using mobdebug to debug luaj
 Using the EmmyLua Debugger in IntelliJ will work,<br>
 however EmmyLua will crash when you use the evaluate feature with a syntax error.<br>
 This is because luaj creates a multi line error string that mobdebug.lua will send <br>
