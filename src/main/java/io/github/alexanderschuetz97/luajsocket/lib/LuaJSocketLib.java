@@ -39,6 +39,11 @@ import java.util.concurrent.Executors;
 
 import static io.github.alexanderschuetz97.luajsocket.util.Util.inputStreamToString;
 
+/**
+ * Library that implements socket, socket.core, ltn12, socket.headers, socket.url, socket.tp, mime, mime.core, socket.http, socket.ftp, socket.smtp modules.
+ * Load it by calling Globals.load(new LuaJSocketLib()).
+ * This library requires PackageLib to be loaded and Globals.compiler to be set.
+ */
 public class LuaJSocketLib extends TwoArgFunction {
 
     protected Globals globals;
@@ -122,76 +127,42 @@ public class LuaJSocketLib extends TwoArgFunction {
     }
 
     protected LuaValue createSMTP() {
-        checkLoaded();
-        try {
-            return globals.load(inputStreamToString(LuaJSocketLib.class.getResourceAsStream("/luasocket/smtp.lua")),"smtp.lua").call();
-        } catch (Exception e) {
-            throw new LuaError(new RuntimeException("failed to load smtp.lua ",e));
-        }
+        return loadLuaScript("smtp.lua");
     }
 
     protected LuaValue createFTP() {
-        checkLoaded();
-        try {
-            return globals.load(inputStreamToString(LuaJSocketLib.class.getResourceAsStream("/luasocket/ftp.lua")),"ftp.lua").call();
-        } catch (Exception e) {
-            throw new LuaError(new RuntimeException("failed to load ftp.lua ",e));
-        }
+        return loadLuaScript("ftp.lua");
     }
 
     protected LuaValue createHttp() {
-        checkLoaded();
-        try {
-            return globals.load(inputStreamToString(LuaJSocketLib.class.getResourceAsStream("/luasocket/http.lua")),"http.lua").call();
-        } catch (Exception e) {
-            throw new LuaError(new RuntimeException("failed to load http.lua ",e));
-        }
+        return loadLuaScript("http.lua");
     }
 
     protected LuaValue createTp() {
-        checkLoaded();
-        try {
-            return globals.load(inputStreamToString(LuaJSocketLib.class.getResourceAsStream("/luasocket/tp.lua")),"tp.lua").call();
-        } catch (Exception e) {
-            throw new LuaError(new RuntimeException("failed to load tp.lua ",e));
-        }
+        return loadLuaScript("tp.lua");
     }
 
     protected LuaValue createMime() {
-        checkLoaded();
-        try {
-            return globals.load(inputStreamToString(LuaJSocketLib.class.getResourceAsStream("/luasocket/mime.lua")),"mime.lua").call();
-        } catch (Exception e) {
-            throw new LuaError(new RuntimeException("failed to load mime.lua ",e));
-        }
-    }
-
-    protected LuaValue createLTN12() {
-        checkLoaded();
-        try {
-            return globals.load(inputStreamToString(LuaJSocketLib.class.getResourceAsStream("/luasocket/ltn12.lua")),"ltn12.lua").call();
-        } catch (Exception e) {
-            throw new LuaError(new RuntimeException("failed to load ltn12.lua ",e));
-        }
+        return loadLuaScript("mime.lua");
     }
 
     protected LuaValue createHeaders() {
-        checkLoaded();
-        try {
-            return globals.load(inputStreamToString(LuaJSocketLib.class.getResourceAsStream("/luasocket/headers.lua")),"headers.lua").call();
-        } catch (Exception e) {
-            throw new LuaError(new RuntimeException("failed to load headers.lua ",e));
-        }
+        return loadLuaScript("headers.lua");
     }
 
     protected LuaValue createURL() {
-        checkLoaded();
-        try {
-            return globals.load(inputStreamToString(LuaJSocketLib.class.getResourceAsStream("/luasocket/url.lua")),"url.lua").call();
-        } catch (Exception e) {
-            throw new LuaError(new RuntimeException("failed to load url.lua ",e));
-        }
+        return loadLuaScript("url.lua");
     }
+
+    protected LuaValue createSocket() {
+        return loadLuaScript("socket.lua");
+    }
+
+    protected LuaValue createLTN12() {
+        return loadLuaScript("ltn12.lua");
+    }
+
+
 
     protected LuaValue createSocketCore() {
         checkLoaded();
@@ -218,14 +189,7 @@ public class LuaJSocketLib extends TwoArgFunction {
         return socketTable;
     }
 
-    protected LuaValue createSocket() {
-        checkLoaded();
-        try {
-            return globals.load(inputStreamToString(LuaJSocketLib.class.getResourceAsStream("/luasocket/socket.lua")),"socket.lua").call();
-        } catch (Exception e) {
-            throw new LuaError(new RuntimeException("failed to load socket.lua ",e));
-        }
-    }
+
 
     protected LuaValue createDNS() {
         checkLoaded();
@@ -293,6 +257,15 @@ public class LuaJSocketLib extends TwoArgFunction {
             return func.getConstructor(LuaJSocketLib.class).newInstance(this);
         } catch (Exception e) {
             throw new LuaError(e);
+        }
+    }
+
+    protected LuaValue loadLuaScript(String aScript) {
+        checkLoaded();
+        try {
+            return globals.load(inputStreamToString(LuaJSocketLib.class.getResourceAsStream("/luasocket/" + aScript)), aScript).call();
+        } catch (Exception e) {
+            throw new LuaError(new RuntimeException("failed to load " + aScript, e));
         }
     }
 

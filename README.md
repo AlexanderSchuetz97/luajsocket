@@ -32,8 +32,11 @@ print("Seconds since Jan 1st 1970 ", tostring(socket.gettime()))
 ````
 #### How to compile luajsocket
 It is recommended to uncomment the maven-gpg-plugin section from the pom.xml
-before building. It is only inside the pom.xml because it needs to be there
-for uploading to maven central. 
+before building. Alternatively you may build it by passing "-Dgpg.skip" as a maven parameter.
+
+If you do not want to run the junit tests then pass "-DskipTests"<br>
+The Junit tests may fail because they will bind a couple of local ports to test Socket functionalities.<br>
+If those ports happen to be occupied on your system then the tests will fail your build.
 
 #### Not implemented / tested yet
 calling socket.select on udp sockets is not implemented yet.<br>
@@ -44,6 +47,10 @@ Since this file was copied from luasocket it should just work.
 <br>
 <br>
 Advanced http functions from http.lua are not tested.<br>
+Since this file was copied from luasocket it should just work.
+<br>
+<br>
+ftp upload from ftp.lua is not tested.<br>
 Since this file was copied from luasocket it should just work.
 
 
