@@ -19,7 +19,10 @@
 //
 package io.github.alexanderschuetz97.luajsocket.tcp.java;
 
-import java.io.*;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InterruptedIOException;
+import java.io.OutputStream;
 import java.util.concurrent.TimeoutException;
 
 /**

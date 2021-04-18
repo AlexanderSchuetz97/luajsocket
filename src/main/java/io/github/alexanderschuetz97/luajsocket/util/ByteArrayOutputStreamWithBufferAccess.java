@@ -35,6 +35,9 @@ public class ByteArrayOutputStreamWithBufferAccess extends ByteArrayOutputStream
         super(len);
     }
 
+    /**
+     * Gets the current internal buffer without copying it. offset is always 0, length can be fetched by calling size().
+     */
     public byte[] getBuffer() {
         return buf;
     }

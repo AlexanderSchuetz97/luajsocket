@@ -22,13 +22,23 @@ package io.github.alexanderschuetz97.luajsocket;
 import io.github.alexanderschuetz97.luajsocket.lib.LuaJSocketLib;
 import io.github.alexanderschuetz97.luajsocket.lib.MobDebugCompatibleDebugLib;
 import io.github.alexanderschuetz97.luajsocket.util.Util;
-import org.junit.*;
-import org.luaj.vm2.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.luaj.vm2.Globals;
+import org.luaj.vm2.LuaString;
+import org.luaj.vm2.LuaTable;
+import org.luaj.vm2.Varargs;
 import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import org.luaj.vm2.lib.jse.JsePlatform;
 import sun.misc.BASE64Encoder;
 
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -38,11 +48,15 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static io.github.alexanderschuetz97.luajsocket.util.Util.toByteArray;
 import static io.github.alexanderschuetz97.luajsocket.util.Util.mapToTable;
+import static io.github.alexanderschuetz97.luajsocket.util.Util.toByteArray;
 
 
 public class LuaJSocketLibTest {

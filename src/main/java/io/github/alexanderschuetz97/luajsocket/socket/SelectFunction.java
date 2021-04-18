@@ -18,17 +18,21 @@ package io.github.alexanderschuetz97.luajsocket.socket;
 // in the COPYING file in top level directory of luajsocket.
 // If not, see <https://www.gnu.org/licenses/>.
 //
+
 import io.github.alexanderschuetz97.luajsocket.lib.LuaJSocketLib;
 import io.github.alexanderschuetz97.luajsocket.tcp.java.SelectCondition;
 import io.github.alexanderschuetz97.luajsocket.tcp.java.TCPMaster;
 import io.github.alexanderschuetz97.luajsocket.tcp.lua.TCPMasterUserdata;
 import io.github.alexanderschuetz97.luajsocket.util.Util;
-
 import org.luaj.vm2.LuaTable;
 import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.Varargs;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * This function takes 2 tables as parameters and a optional timeout.

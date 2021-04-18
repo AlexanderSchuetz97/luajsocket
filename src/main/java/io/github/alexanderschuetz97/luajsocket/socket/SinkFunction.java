@@ -24,7 +24,9 @@ import io.github.alexanderschuetz97.luajsocket.tcp.java.TCPMaster;
 import io.github.alexanderschuetz97.luajsocket.tcp.lua.TCPMasterUserdata;
 import io.github.alexanderschuetz97.luajsocket.util.ByteArrayOutputStreamWithBufferAccess;
 import io.github.alexanderschuetz97.luajsocket.util.Util;
-import org.luaj.vm2.*;
+import org.luaj.vm2.LuaString;
+import org.luaj.vm2.LuaValue;
+import org.luaj.vm2.Varargs;
 import org.luaj.vm2.lib.VarArgFunction;
 
 import java.io.IOException;

@@ -33,13 +33,42 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Contains various util functions and constants.
+ */
 public class Util {
 
+    /**
+     * LuaString for CRLF
+     */
     public static final LuaString CRLF = LuaString.valueOf("\r\n");
+
+    /**
+     * Bytes for CR LF
+     */
     public static final byte[] CRLF_BYTES = new byte[]{'\r','\n'};
+    /**
+     * Bytes for CRLF in QP Encoding.
+     */
     public static final byte[] CRLF_BYTES_QP = new byte[]{'=','\r','\n'};
+    /**
+     * Bytes for escaping the '=' character in QP encoding.
+     */
+    public static final byte[] EQUALS_FOR_QP_ENCODING = new byte[]{'=','3','D'};
+
+    /**
+     * equivalent to lua return nil, 0
+     */
     public static final Varargs NIL_ZERO = LuaValue.varargsOf(LuaValue.NIL, LuaValue.ZERO);
+
+    /**
+     * equivalent to lua return nil, nil
+     */
     public static final Varargs NIL_NIL = LuaValue.varargsOf(LuaValue.NIL, LuaValue.NIL);
+
+    /**
+     * Base 64 Table.
+     */
     public static final byte[] BASE64_TABLE = new byte[] {
             'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
             'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
@@ -48,6 +77,11 @@ public class Util {
             '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
     };
 
+    /**
+     * Inverse base 64 table. Non Base64 Characters are null.
+     * EX: 'A' -> 0
+     * EX: 'D' -> 3
+     */
     public static final Integer[] B64TABLE_REVERSE = new Integer[123];
 
     static {
@@ -56,10 +90,23 @@ public class Util {
         }
     }
 
+    /**
+     * Array that holds 2 character upper case hexadecimal representation of all integer values from including 0x0 to including 0xff.
+     */
     public static final String[] HEX = new String[0xff+1];
+    /**
+     * Array that holds 2 ASCI byte upper case hexadecimal representation of all integer values from including 0x0 to including 0xff.
+     * EX: 0x00 -> 0x30, 0x30 (Hint 0x30 is the character 0 in the ascii table)
+     * EX: 0x25 -> 0x32, 0x35 (0x32 is '2', 0x35 is '5')
+     */
     public static final byte[][] HEX_BYTES = new byte[0xff+1][];
+    /**
+     * Same as HEX_BYTES but instead the array is always 3 bytes long. The first byte is always 0x3D or '=' because
+     * this is the prefix needed for QP encoding.
+     */
     public static final byte[][] HEX_FOR_QP_ENCODING = new byte[0xff+1][];
-    public static final byte[] EQUALS_FOR_QP_ENCODING = new byte[]{'=','3','D'};
+
+
 
     static {
         for (int i = 0; i <= 0xff; i++) {
@@ -100,6 +147,10 @@ public class Util {
         return 4;
     }
 
+    /**
+     * Converts a LuaTables array part to a list.
+     * Indexes will be shifted by one. lua 1 -> java 0 because indexes in java start at 0.
+     */
     public static List<LuaValue> tableToArrayListIPairs(LuaValue table) {
         List<LuaValue> tempL = new ArrayList<>();
         if (table == null || !table.istable()) {
@@ -116,6 +167,9 @@ public class Util {
         return tempL;
     }
 
+    /**
+     * Converts a java string to a LuaString or NIL if null.
+     */
     public static LuaValue stringToLuaString(String string) {
         if (string == null) {
             return LuaValue.NIL;
@@ -124,14 +178,9 @@ public class Util {
         return LuaValue.valueOf(string);
     }
 
-    public static LuaValue toFunction(LuaValue value) {
-        if (value == null || !value.isfunction()) {
-            return LuaValue.NIL;
-        }
-
-        return value.checkfunction();
-    }
-
+    /**
+     * Returns the lua boolean value of the parameter or false if not a bool.
+     */
     public static boolean toBoolean(LuaValue value) {
         if (value == null) {
             return false;
@@ -144,6 +193,9 @@ public class Util {
         return value.checkboolean();
     }
 
+    /**
+     * Returns the value of the parameter or the fallback if the parameter is null/nil or not a int.
+     */
     public static int optInt(LuaValue value, int fallback) {
         if (value == null) {
             return fallback;
@@ -162,6 +214,9 @@ public class Util {
         return lv.checkint();
     }
 
+    /**
+     * Returns the value of the parameter or the fallback if the parameter is null/nil or not a string.
+     */
     public static String optString(LuaValue value, String fallback) {
         if (value == null) {
             return fallback;
@@ -175,12 +230,19 @@ public class Util {
         return vs.checkjstring();
     }
 
+    /**
+     * Copies a lua string to a byte array.
+     */
     public static byte[] toByteArray(LuaString ls) {
         byte[] b = new byte[ls.m_length];
         System.arraycopy(ls.m_bytes, ls.m_offset, b, 0, ls.m_length);
         return b;
     }
 
+    /**
+     * Converts a java map to a lua table.
+     * Keys and values are coerced using CoerceJavaToLua.
+     */
     public static LuaTable mapToTable(Map<?,?> map) {
         LuaTable lt = new LuaTable();
         if (map == null) {
@@ -194,6 +256,9 @@ public class Util {
         return lt;
     }
 
+    /**
+     * Read all bytes of a input stream into a byte array.
+     */
     public static byte[] readAllBytesFromInputStream(InputStream inputStream) throws IOException {
         byte[] buf = new byte[512];
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -208,17 +273,18 @@ public class Util {
         return baos.toByteArray();
     }
 
+    /**
+     * Reads all bytes from the input stream into a string using default encoding.
+     */
     public static String inputStreamToString(InputStream inputStream) throws IOException {
         return new String(readAllBytesFromInputStream(inputStream));
     }
 
-    public static String bthx(byte b) {
-        String hx = Integer.toHexString(unsignedByte(b));
-        if (hx.length() == 1) {
-            return "0"+hx;
-        }
-
-        return hx;
+    /**
+     * Returns a 2 character long hexadecimal representation of the unsigned value of the input.
+     */
+    public static String byteToHex(byte b) {
+        return HEX[unsignedByte(b)];
     }
 
     public static int unsignedByte(byte b) {
@@ -250,8 +316,8 @@ public class Util {
 
         for (int i = 0; i < 8; i++) {
             String section;
-            section = bthx(ipv6[i*2]);
-            section += bthx(ipv6[(i*2)+1]);
+            section = byteToHex(ipv6[i*2]);
+            section += byteToHex(ipv6[(i*2)+1]);
             if (i != 0) {
                 ipv6StrBuilder.append(":");
             }

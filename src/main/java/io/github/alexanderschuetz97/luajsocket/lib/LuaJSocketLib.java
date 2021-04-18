@@ -19,19 +19,65 @@
 //
 package io.github.alexanderschuetz97.luajsocket.lib;
 
-import io.github.alexanderschuetz97.luajsocket.tcp.java.TCPMasterFinalizer;
 import io.github.alexanderschuetz97.luajsocket.dns.DNSGetHostnameFunction;
 import io.github.alexanderschuetz97.luajsocket.dns.DNSToHostnameFunction;
 import io.github.alexanderschuetz97.luajsocket.dns.DNSToIpFunction;
-import io.github.alexanderschuetz97.luajsocket.socket.*;
+import io.github.alexanderschuetz97.luajsocket.mime.MimeB64Function;
+import io.github.alexanderschuetz97.luajsocket.mime.MimeDotFunction;
+import io.github.alexanderschuetz97.luajsocket.mime.MimeEolFunction;
+import io.github.alexanderschuetz97.luajsocket.mime.MimeQPFunction;
+import io.github.alexanderschuetz97.luajsocket.mime.MimeQPWrapFunction;
+import io.github.alexanderschuetz97.luajsocket.mime.MimeUnB64Function;
+import io.github.alexanderschuetz97.luajsocket.mime.MimeUnQPFunction;
+import io.github.alexanderschuetz97.luajsocket.mime.MimeWrapFunction;
+import io.github.alexanderschuetz97.luajsocket.socket.AbstractLuaJSocketFunction;
+import io.github.alexanderschuetz97.luajsocket.socket.BindFunction;
+import io.github.alexanderschuetz97.luajsocket.socket.ConnectFunction;
+import io.github.alexanderschuetz97.luajsocket.socket.GetTimeFunction;
+import io.github.alexanderschuetz97.luajsocket.socket.NewTryFunction;
+import io.github.alexanderschuetz97.luajsocket.socket.ProtectFunction;
+import io.github.alexanderschuetz97.luajsocket.socket.SelectFunction;
+import io.github.alexanderschuetz97.luajsocket.socket.SinkFunction;
+import io.github.alexanderschuetz97.luajsocket.socket.SkipFunction;
+import io.github.alexanderschuetz97.luajsocket.socket.SleepFunction;
 import io.github.alexanderschuetz97.luajsocket.tcp.java.TCPMaster;
-import io.github.alexanderschuetz97.luajsocket.tcp.lua.*;
+import io.github.alexanderschuetz97.luajsocket.tcp.java.TCPMasterFinalizer;
+import io.github.alexanderschuetz97.luajsocket.tcp.lua.TCPAcceptFunction;
+import io.github.alexanderschuetz97.luajsocket.tcp.lua.TCPBindFunction;
+import io.github.alexanderschuetz97.luajsocket.tcp.lua.TCPCloseFunction;
+import io.github.alexanderschuetz97.luajsocket.tcp.lua.TCPConnectFunction;
+import io.github.alexanderschuetz97.luajsocket.tcp.lua.TCPFunction;
+import io.github.alexanderschuetz97.luajsocket.tcp.lua.TCPGetPeerNameFunction;
+import io.github.alexanderschuetz97.luajsocket.tcp.lua.TCPGetSockNameFunction;
+import io.github.alexanderschuetz97.luajsocket.tcp.lua.TCPGetStatsFunction;
+import io.github.alexanderschuetz97.luajsocket.tcp.lua.TCPListenFunction;
+import io.github.alexanderschuetz97.luajsocket.tcp.lua.TCPMasterUserdata;
+import io.github.alexanderschuetz97.luajsocket.tcp.lua.TCPReceiveFunction;
+import io.github.alexanderschuetz97.luajsocket.tcp.lua.TCPSendFunction;
+import io.github.alexanderschuetz97.luajsocket.tcp.lua.TCPSetOptionFunction;
+import io.github.alexanderschuetz97.luajsocket.tcp.lua.TCPSetStatsFunction;
+import io.github.alexanderschuetz97.luajsocket.tcp.lua.TCPSetTimeoutFunction;
+import io.github.alexanderschuetz97.luajsocket.tcp.lua.TCPShutdownFunction;
 import io.github.alexanderschuetz97.luajsocket.udp.java.UDPMaster;
 import io.github.alexanderschuetz97.luajsocket.udp.java.UDPMasterFinalizer;
-import io.github.alexanderschuetz97.luajsocket.mime.*;
-import io.github.alexanderschuetz97.luajsocket.udp.lua.*;
-import io.github.alexanderschuetz97.luajsocket.tcp.lua.TCPMasterUserdata;
-import org.luaj.vm2.*;
+import io.github.alexanderschuetz97.luajsocket.udp.lua.UDPCloseFunction;
+import io.github.alexanderschuetz97.luajsocket.udp.lua.UDPFunction;
+import io.github.alexanderschuetz97.luajsocket.udp.lua.UDPGetPeerNameFunction;
+import io.github.alexanderschuetz97.luajsocket.udp.lua.UDPGetSockNameFunction;
+import io.github.alexanderschuetz97.luajsocket.udp.lua.UDPMasterUserdata;
+import io.github.alexanderschuetz97.luajsocket.udp.lua.UDPReceiveFromFunction;
+import io.github.alexanderschuetz97.luajsocket.udp.lua.UDPReceiveFunction;
+import io.github.alexanderschuetz97.luajsocket.udp.lua.UDPSendFunction;
+import io.github.alexanderschuetz97.luajsocket.udp.lua.UDPSendToFunction;
+import io.github.alexanderschuetz97.luajsocket.udp.lua.UDPSetOptionFunction;
+import io.github.alexanderschuetz97.luajsocket.udp.lua.UDPSetPeerNameFunction;
+import io.github.alexanderschuetz97.luajsocket.udp.lua.UDPSetSockNameFunction;
+import io.github.alexanderschuetz97.luajsocket.udp.lua.UDPSetTimeoutFunction;
+import org.luaj.vm2.Globals;
+import org.luaj.vm2.LuaError;
+import org.luaj.vm2.LuaString;
+import org.luaj.vm2.LuaTable;
+import org.luaj.vm2.LuaValue;
 import org.luaj.vm2.lib.TwoArgFunction;
 
 import java.util.concurrent.Executor;
@@ -88,7 +134,10 @@ public class LuaJSocketLib extends TwoArgFunction {
         return socket;
     }
 
-    private void checkLoaded() {
+    /**
+     * Utility method that checks if the library was loaded properly by calling Globals.load().
+     */
+    protected void checkLoaded() {
         if (globals == null) {
             throw new LuaError("Globals not loaded");
         }
@@ -111,6 +160,19 @@ public class LuaJSocketLib extends TwoArgFunction {
         executor.execute(runnable);
     }
 
+
+    /**
+     * The version of LuaSocket we are trying to "emulate"
+     */
+    protected static final LuaString VERSION = LuaString.valueOf("LuaSocket 3.0");
+
+    protected LuaValue getVersion() {
+        return VERSION;
+    }
+
+    /**
+     * Create the core mime functions. luasocket implements them in c.
+     */
     protected LuaValue createMimeCore() {
         checkLoaded();
         LuaTable mimeTable = new LuaTable();
@@ -126,26 +188,44 @@ public class LuaJSocketLib extends TwoArgFunction {
         return mimeTable;
     }
 
+    /**
+     * load the smtp.lua from luasocket.
+     */
     protected LuaValue createSMTP() {
         return loadLuaScript("smtp.lua");
     }
 
+    /**
+     * load the ftp.lua from luasocket.
+     */
     protected LuaValue createFTP() {
         return loadLuaScript("ftp.lua");
     }
 
+    /**
+     * load the http.lua from luasocket.
+     */
     protected LuaValue createHttp() {
         return loadLuaScript("http.lua");
     }
 
+    /**
+     * load the tp.lua from luasocket.
+     */
     protected LuaValue createTp() {
         return loadLuaScript("tp.lua");
     }
 
+    /**
+     * load the mime.lua from luasocket.
+     */
     protected LuaValue createMime() {
         return loadLuaScript("mime.lua");
     }
 
+    /**
+     * load the headers.lua from luasocket.
+     */
     protected LuaValue createHeaders() {
         return loadLuaScript("headers.lua");
     }
@@ -167,6 +247,14 @@ public class LuaJSocketLib extends TwoArgFunction {
     protected LuaValue createSocketCore() {
         checkLoaded();
         LuaTable socketTable = new LuaTable();
+
+        //Various misc constants that luasocket sets.
+        //Applications may need them there are here just in case.
+        socketTable.set("_VERSION", getVersion());
+        socketTable.set("_SETSIZE", 1024);
+        socketTable.set("_DATAGRAMSIZE", 8192);
+        socketTable.set("_LUAJ", TRUE);
+
         socketTable.set("dns", createDNS());
         LuaValue tcp = createFunction(TCPFunction.class);
         //Java really does not care if your socket is ipv4 or ipv6...
@@ -175,6 +263,8 @@ public class LuaJSocketLib extends TwoArgFunction {
         socketTable.set("tcp6", tcp);
 
         socketTable.set("udp", createFunction(UDPFunction.class));
+        socketTable.set("udp4", createFunction(UDPFunction.class));
+        socketTable.set("udp6", createFunction(UDPFunction.class));
 
         socketTable.set("bind", createFunction(BindFunction.class));
         socketTable.set("connect", createFunction(ConnectFunction.class));
