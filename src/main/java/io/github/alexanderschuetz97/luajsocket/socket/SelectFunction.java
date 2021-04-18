@@ -53,6 +53,12 @@ public class SelectFunction extends AbstractLuaJSocketFunction {
         Collection<LuaValue> recvt = Util.tableToArrayListIPairs(args.arg1());
         Collection<LuaValue> sendt = Util.tableToArrayListIPairs(args.arg(2));
         int timeout = args.optint(3, -1);
+
+        //Timeout is in seconds...
+        if (timeout > 0) {
+            timeout*=1000;
+        }
+
         LuaTable resultReadyForWrite = new LuaTable();
         LuaTable resultReadyForRead = new LuaTable();
 
@@ -93,12 +99,12 @@ public class SelectFunction extends AbstractLuaJSocketFunction {
 
         if (readReady.isEmpty() && writeReady.isEmpty()) {
             if (timeout < 0) {
-                return varargsOf(resultReadyForWrite, resultReadyForRead, NIL);
+                return varargsOf(resultReadyForRead, resultReadyForWrite, NIL);
             }
             try {
                 Thread.sleep(timeout);
             } catch (InterruptedException e) {
-                return varargsOf(resultReadyForWrite, resultReadyForRead, NIL);
+                return varargsOf(resultReadyForRead, resultReadyForWrite, NIL);
             }
 
             return varargsOf(resultReadyForWrite, resultReadyForRead, valueOf("timeout"));
@@ -128,6 +134,8 @@ public class SelectFunction extends AbstractLuaJSocketFunction {
                 }
             }
 
+
+
             resultReadyForRead.set(i, tcpMasterUserdata);
             resultReadyForRead.set(tcpMasterUserdata, tcpMasterUserdata);
             i++;
@@ -137,7 +145,7 @@ public class SelectFunction extends AbstractLuaJSocketFunction {
         for (TCPMasterUserdata tcpMasterUserdata : writeReadyUserdata) {
             TCPMaster tcpMaster = tcpMasterUserdata.getMaster();
             if (tcpMaster.isClient()) {
-                if (!tcpMaster.getClient().readReady()) {
+                if (!tcpMaster.getClient().writeReady()) {
                     continue;
                 }
             }
@@ -147,6 +155,8 @@ public class SelectFunction extends AbstractLuaJSocketFunction {
             i++;
         }
 
-        return varargsOf(resultReadyForWrite, resultReadyForRead);
+
+
+        return varargsOf(resultReadyForRead, resultReadyForWrite, NIL);
     }
 }

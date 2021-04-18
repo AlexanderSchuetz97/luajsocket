@@ -139,6 +139,10 @@ public class TCPMaster {
         }
         this.condition = condition;
 
+        //If select called then this also accounts to the querk of needing to be called with a non zero timeout.
+        if (this.client != null) {
+            this.client.wasCalledWithNonZeroTimeout = true;
+        }
     }
 
     public void notifyReadReady() {
@@ -151,7 +155,7 @@ public class TCPMaster {
     public void notifyWriteReady() {
         SelectCondition cond = condition;
         if (cond != null) {
-            condition.notifyReadReady(this);
+            condition.notifyWriteReady(this);
         }
     }
 

@@ -105,7 +105,7 @@ public class Util {
         if (table == null || !table.istable()) {
             return tempL;
         }
-        LuaValue k = LuaValue.NIL;
+        LuaValue k = LuaValue.ZERO;
         while ( true ) {
             Varargs n = table.inext(k);
             if ( (k = n.arg1()).isnil() )

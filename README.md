@@ -35,6 +35,19 @@ It is recommended to uncomment the maven-gpg-plugin section from the pom.xml
 before building. It is only inside the pom.xml because it needs to be there
 for uploading to maven central. 
 
+#### Not implemented / tested yet
+calling socket.select on udp sockets is not implemented yet.<br>
+<br>
+All functions from smtp.lua are not tested due to them not being testable<br>
+without settings up an entire smtp server.<br>
+Since this file was copied from luasocket it should just work.
+<br>
+<br>
+Advanced http functions from http.lua are not tested.<br>
+Since this file was copied from luasocket it should just work.
+
+
+
 #### Debugging Luaj using mobdebug.lua
 Using luajsocket you can finally debug luaj code using any lua ide that supports "mobdebug.lua"<br>
 Similar libraries will probably work too. "mobdebug.lua" is known to be working.<br>

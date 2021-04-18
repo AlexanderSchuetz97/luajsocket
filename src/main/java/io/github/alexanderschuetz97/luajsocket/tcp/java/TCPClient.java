@@ -22,6 +22,7 @@ package io.github.alexanderschuetz97.luajsocket.tcp.java;
 import java.io.*;
 import java.net.Socket;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Represents a TCP client instance in TCPMaster.
@@ -107,9 +108,10 @@ public class TCPClient {
      * Querk from luasocket. If read was never called with a non zero timeout then it always pretends to not have data...
      * Unfortunately mobdebug.lua relies on this querk to work properly so we have to emulate it.
      */
-    private boolean wasCalledWithNonZeroTimeout = false;
+    protected boolean wasCalledWithNonZeroTimeout = false;
 
     public void readLine(ByteArrayOutputStream output, int singleTimeout, int totalTimeout) throws IOException, TimeoutException {
+        hasOneMoreReadQueue.set(false);
         if (singleTimeout != 0) {
             wasCalledWithNonZeroTimeout = true;
         }
@@ -127,6 +129,7 @@ public class TCPClient {
     }
 
     public void readAll(ByteArrayOutputStream output, int singleTimeout, int totalTimeout) throws IOException, TimeoutException {
+        hasOneMoreReadQueue.set(false);
         if (singleTimeout != 0) {
             wasCalledWithNonZeroTimeout = true;
         }
@@ -145,6 +148,7 @@ public class TCPClient {
 
 
     public void readBytes(ByteArrayOutputStream output, int count, int singleTimeout, int totalTimeout) throws IOException, TimeoutException {
+        hasOneMoreReadQueue.set(false);
         if (singleTimeout != 0) {
             wasCalledWithNonZeroTimeout = true;
         }
@@ -161,8 +165,10 @@ public class TCPClient {
         }
     }
 
+    private AtomicBoolean hasOneMoreReadQueue = new AtomicBoolean();
+
     public boolean readReady() {
-        return readFromSocketBuffer.canRead();
+        return hasOneMoreReadQueue.get() || readFromSocketBuffer.canRead();
     }
 
     public boolean writeReady() {
@@ -248,18 +254,23 @@ public class TCPClient {
                     i = socketInputStream.read(buf);
                 } catch (IOException e) {
                     readFromSocketBuffer.err(e);
+                    master.notifyReadReady();
                     return;
                 }
                 if (i > 0) {
                     try {
+                        hasOneMoreReadQueue.set(true);
+                        master.notifyReadReady();
                         readFromSocketBuffer.write(buf, 0, i, -1, -1);
                     } catch (IOException e) {
+                        master.notifyReadReady();
                         return;
                     }
                 }
             }
 
             readFromSocketBuffer.eof();
+            master.notifyReadReady();
         }
     }
 

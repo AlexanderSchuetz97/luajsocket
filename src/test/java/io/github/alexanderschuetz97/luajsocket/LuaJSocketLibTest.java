@@ -24,6 +24,7 @@ import io.github.alexanderschuetz97.luajsocket.lib.MobDebugCompatibleDebugLib;
 import io.github.alexanderschuetz97.luajsocket.util.Util;
 import org.junit.*;
 import org.luaj.vm2.*;
+import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import org.luaj.vm2.lib.jse.JsePlatform;
 import sun.misc.BASE64Encoder;
 
@@ -37,10 +38,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.github.alexanderschuetz97.luajsocket.util.Util.toByteArray;
 import static io.github.alexanderschuetz97.luajsocket.util.Util.mapToTable;
@@ -762,6 +761,110 @@ public class LuaJSocketLibTest {
         Assert.assertTrue(f.get());
     }
 
+    @Test
+    public void testTCPServer() throws Exception {
+        String script = "";
+        script+="socket = require('socket')\n";
+        script+="master = socket.tcp()\n";
+        script+="master:setoption('reuseaddr',true)\n";
+        script+="master:bind('*', " + (AVAILABLE_PORT+1)+ ")\n";
+        script+="spin:set(1)\n";
+        script+="client = master:accept()\n";
+        script+="client:send('Hello World')\n";
+        script+="client:close()\n";
+        script+="master:close()\n";
+
+        final AtomicInteger spin = new AtomicInteger();
+        globals.set("spin", CoerceJavaToLua.coerce(spin));
+
+        Future f = runScript(script);
+
+        long tsp = System.currentTimeMillis();
+        while (spin.get() != 1) {
+            if (f.isDone()) {
+                f.get(1, TimeUnit.MILLISECONDS);
+                Assert.fail("lua script stopped unexepectedly.");
+            }
+
+            if (System.currentTimeMillis()-tsp > 5000) {
+                Assert.fail("Lua Script failed to bind socket.");
+            }
+
+            Thread.sleep(20);
+        }
+
+        Socket s = new Socket();
+        s.connect(new InetSocketAddress(InetAddress.getByName("127.0.0.1"), AVAILABLE_PORT+1));
+        s.setSoTimeout(5000);
+        String res = new String(Util.readAllBytesFromInputStream(s.getInputStream()), StandardCharsets.UTF_8);
+        s.close();
+        Assert.assertEquals("Hello World", res);
+    }
+
+    @Test
+    public void testSelect() throws Exception {
+        String script = "";
+        script+="socket = require('socket')\n";
+        script+="client1 = socket.tcp()\n";
+        script+="client2 = socket.tcp()\n";
+        script+="client1:connect('127.0.0.1', " + AVAILABLE_PORT+ ")\n";
+        script+="client2:connect('127.0.0.1', " + AVAILABLE_PORT+ ")\n";
+        script+="client1:settimeout(0)\n";
+        script+="client2:settimeout(0)\n";
+        script+="rcv = {}\n";
+        script+="rcv[1] = client1\n";
+        script+="rcv[2] = client2\n";
+        script+="rcvt, sendt, err = socket.select(rcv, nil, 1)\n";
+        script+="if err ~= 'timeout' then\n";
+        script+="print(err)\n";
+        script+="client1:send('N')\n";
+        script+="client1:close()\n";
+        script+="client2:close()\n";
+        script+="return\n";
+        script+="end\n";
+        script+="client1:send('Y')\n";
+        script+="rcvt, sendt, err = socket.select(rcv, nil, 5)\n";
+        script+="if rcvt[client2] == nil or err ~= nil then\n";
+        script+="print(err)\n";
+        script+="client1:send('N')\n";
+        script+="client1:close()\n";
+        script+="client2:close()\n";
+        script+="return\n";
+        script+="end\n";
+        script+="client1:send('Y')\n";
+        script+="msg = client2:receive('*a')\n";
+        script+="client1:close()\n";
+        script+="client2:close()\n";
+        script+="return msg\n";
+
+        Future<Varargs> f = runScript(script);
+
+        server.setSoTimeout(5000);
+        Socket client1 = server.accept();
+        Socket client2 = server.accept();
+        Assert.assertEquals('Y', client1.getInputStream().read());
+        Thread.sleep(1000);
+        client2.getOutputStream().write("Hello World".getBytes(StandardCharsets.UTF_8));
+        client2.getOutputStream().flush();
+        client2.close();
+        Assert.assertEquals('Y', client1.getInputStream().read());
+        client1.close();
+        Assert.assertEquals("Hello World", f.get(500000000, TimeUnit.MILLISECONDS).checkjstring(1));
+    }
+
+    private Future<Varargs> runScript(final String script) {
+        return EX.submit(new Callable<Varargs>() {
+            @Override
+            public Varargs call() throws Exception{
+                try {
+                    return globals.load(script, "script").call();
+                } catch (Exception exc) {
+                    exc.printStackTrace();
+                    throw exc;
+                }
+            }
+        });
+    }
 
     private Future<Boolean> sendFirstSocket(final String content) {
         return EX.submit(new Callable<Boolean>() {

@@ -29,6 +29,7 @@ import java.net.Socket;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Represents a TCP server instance in TCPMaster.
@@ -67,12 +68,14 @@ public class TCPServer {
         return server;
     }
 
+    private volatile boolean hasSocket = false;
+
     public synchronized boolean acceptReady() {
         if (server.isClosed()) {
             return true;
         }
 
-        return !socketTransferQueue.isEmpty();
+        return hasSocket || !socketTransferQueue.isEmpty();
     }
 
     public synchronized TCPMasterUserdata accept(int timeout) throws TimeoutException, IOException {
@@ -132,7 +135,9 @@ public class TCPServer {
                     }
 
 
+                    hasSocket = true;
                     try {
+                        master.notifyReadReady();
                         socketTransferQueue.put(socket);
                     } catch (InterruptedException e) {
                         try {
@@ -141,6 +146,8 @@ public class TCPServer {
                             //DC.
                         }
                         return;
+                    } finally {
+                        hasSocket = false;
                     }
                 }
             } finally {
