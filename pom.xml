@@ -6,7 +6,7 @@
 
     <groupId>io.github.alexanderschuetz97</groupId>
     <artifactId>luajsocket</artifactId>
-    <version>0.1</version>
+    <version>0.1.1</version>
     <packaging>bundle</packaging>
 
     <name>${project.groupId}:${project.artifactId}</name>
@@ -39,7 +39,9 @@
             </resource>
         </resources>
 
+
         <plugins>
+            <!-- OSGI Bundle creator -->
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
@@ -52,9 +54,12 @@
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>io.github.alexanderschuetz97.luajsocket.*</Export-Package>
                         <Import-Package>org.luaj.vm2.*</Import-Package>
+                        <Include-Resource>{maven-resources},luasocket/=target/luajcoutput/</Include-Resource>
                     </instructions>
                 </configuration>
             </plugin>
+
+            <!-- Remove username from manifest -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -67,6 +72,8 @@
                     </archive>
                 </configuration>
             </plugin>
+
+            <!-- Generate Source Jar -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -80,6 +87,8 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- Generate Javadoc -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
@@ -93,6 +102,8 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- Sign all jars using GPG key -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
@@ -107,6 +118,8 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- Configure compiler for java 7 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -115,18 +128,64 @@
                     <target>7</target>
                 </configuration>
             </plugin>
+
+            <!-- Copy dependencies to temporary folder in target needed by next step to compile lua to java-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.10</version>
+                <configuration>
+                    <outputDirectory>target/deps</outputDirectory>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>target/deps</outputDirectory>
+                            <overWriteReleases>true</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+
+
+
+            <!-- compile lua scripts to java -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <executions>
+                    <execution>
+                        <id>first-execution</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <configuration>
+                            <mainClass>io.github.alexanderschuetz97.luajsocket.util.ScriptPreCompiler</mainClass>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
         </plugins>
     </build>
 
     <dependencies>
-        <!-- https://mvnrepository.com/artifact/org.luaj/luaj-jse -->
         <dependency>
             <groupId>org.luaj</groupId>
             <artifactId>luaj-jse</artifactId>
             <version>3.0.1</version>
             <scope>provided</scope>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/junit/junit -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

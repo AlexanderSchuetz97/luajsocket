@@ -21,6 +21,7 @@ package io.github.alexanderschuetz97.luajsocket;
 
 import io.github.alexanderschuetz97.luajsocket.lib.LuaJSocketLib;
 import io.github.alexanderschuetz97.luajsocket.lib.MobDebugCompatibleDebugLib;
+import io.github.alexanderschuetz97.luajsocket.util.ScriptLoader;
 import io.github.alexanderschuetz97.luajsocket.util.Util;
 import org.junit.After;
 import org.junit.Assert;
@@ -35,14 +36,18 @@ import org.luaj.vm2.lib.jse.CoerceJavaToLua;
 import org.luaj.vm2.lib.jse.JsePlatform;
 import sun.misc.BASE64Encoder;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -343,14 +348,30 @@ public class LuaJSocketLibTest {
 
     @Before
     public void before() throws Exception {
+        ScriptLoader.setInstance(new ScriptLoader() {
+            @Override
+            protected URLClassLoader getClassLoader() {
+                File f = new File("target/luajcoutput/compiled.zip");
+                if (!f.exists()) {
+                    throw new RuntimeException("Run maven clean package first!");
+                }
+                try {
+                    return new URLClassLoader(new URL[]{f.toURI().toURL()}, LuaJSocketLibTest.class.getClassLoader());
+                } catch (MalformedURLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
+
         globals = JsePlatform.standardGlobals();
-        globals.load(new MobDebugCompatibleDebugLib());
+        //globals.load(new MobDebugCompatibleDebugLib());
 
         executorService = Executors.newCachedThreadPool();
         globals.load(new LuaJSocketLib());
         server = new ServerSocket();
         server.setReuseAddress(true);
         server.bind(new InetSocketAddress(InetAddress.getByName("0.0.0.0"), AVAILABLE_PORT));
+
     }
 
     @After
@@ -366,6 +387,7 @@ public class LuaJSocketLibTest {
             //DC
         }
         server = null;
+        ScriptLoader.setInstance(null);
 
     }
 

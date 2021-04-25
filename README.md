@@ -17,6 +17,16 @@ https://github.com/diegonehab/luasocket/
 * luaj version 3.0.1
 
 ## Usage
+Maven:
+````
+<!-- https://mvnrepository.com/artifact/io.github.alexanderschuetz97/luajsocket -->
+<dependency>
+    <groupId>io.github.alexanderschuetz97</groupId>
+    <artifactId>luajsocket</artifactId>
+    <version>0.1.1</version>
+</dependency>
+````
+
 In Java:
 ````
 Globals globals = JsePlatform.standardGlobals();

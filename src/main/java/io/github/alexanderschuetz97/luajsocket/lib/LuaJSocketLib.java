@@ -73,6 +73,7 @@ import io.github.alexanderschuetz97.luajsocket.udp.lua.UDPSetOptionFunction;
 import io.github.alexanderschuetz97.luajsocket.udp.lua.UDPSetPeerNameFunction;
 import io.github.alexanderschuetz97.luajsocket.udp.lua.UDPSetSockNameFunction;
 import io.github.alexanderschuetz97.luajsocket.udp.lua.UDPSetTimeoutFunction;
+import io.github.alexanderschuetz97.luajsocket.util.ScriptLoader;
 import org.luaj.vm2.Globals;
 import org.luaj.vm2.LuaError;
 import org.luaj.vm2.LuaString;
@@ -83,8 +84,6 @@ import org.luaj.vm2.lib.TwoArgFunction;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
-import static io.github.alexanderschuetz97.luajsocket.util.Util.inputStreamToString;
-
 /**
  * Library that implements socket, socket.core, ltn12, socket.headers, socket.url, socket.tp, mime, mime.core, socket.http, socket.ftp, socket.smtp modules.
  * Load it by calling Globals.load(new LuaJSocketLib()).
@@ -93,6 +92,8 @@ import static io.github.alexanderschuetz97.luajsocket.util.Util.inputStreamToStr
 public class LuaJSocketLib extends TwoArgFunction {
 
     protected Globals globals;
+
+    protected static Executor DEFAULT_EXECUTOR;
 
     protected Executor executor;
 
@@ -103,7 +104,7 @@ public class LuaJSocketLib extends TwoArgFunction {
         }
         this.globals = arg2.checkglobals();
         if (this.executor == null) {
-            executor = createExecutor();
+            executor = getExecutor();
         }
 
 
@@ -143,12 +144,20 @@ public class LuaJSocketLib extends TwoArgFunction {
         }
     }
 
+
+
     /**
      * ThreadPool used for async java operations. Overwrite to replace this with your own thread pool.
-     * This method is only called once. The result is cached.
+     * This method is only called once per instance. The result is cached.
      */
-    protected Executor createExecutor() {
-        return Executors.newCachedThreadPool();
+    protected Executor getExecutor() {
+        synchronized (LuaJSocketLib.class) {
+            if (DEFAULT_EXECUTOR == null) {
+                DEFAULT_EXECUTOR = Executors.newCachedThreadPool();
+            }
+        }
+
+        return DEFAULT_EXECUTOR;
     }
 
     /**
@@ -350,13 +359,18 @@ public class LuaJSocketLib extends TwoArgFunction {
         }
     }
 
+
+    /**
+     * Method to overwrite to load the luasocket lua scripts from another location.
+     * The default implementation will cache the prototypes/luajc class output (if luac is the compiler in the globals).
+     *
+     * If no loader/compiler is present in the globals then luac is used.
+     * @param aScript
+     * @return
+     */
     protected LuaValue loadLuaScript(String aScript) {
         checkLoaded();
-        try {
-            return globals.load(inputStreamToString(LuaJSocketLib.class.getResourceAsStream("/luasocket/" + aScript)), aScript).call();
-        } catch (Exception e) {
-            throw new LuaError(new RuntimeException("failed to load " + aScript, e));
-        }
+        return ScriptLoader.instance().load(globals, aScript).call();
     }
 
 
