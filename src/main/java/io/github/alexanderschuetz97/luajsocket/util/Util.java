@@ -30,8 +30,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 /**
  * Contains various util functions and constants.
@@ -326,4 +329,35 @@ public class Util {
 
         return ipv6StrBuilder.toString();
     }
+
+    public static Map<String, byte[]> readZipFile(InputStream zip) throws IOException {
+        Map<String, byte[]> files = new HashMap<>();
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buffer = new byte[512];
+
+        try (ZipInputStream zipInput = new ZipInputStream(zip)) {
+            while (true) {
+                ZipEntry entry = zipInput.getNextEntry();
+                if (entry == null) {
+                    return files;
+                }
+
+                baos.reset();
+                int i = 0;
+                while (i != -1) {
+                    i = zipInput.read(buffer);
+                    if (i > 0) {
+                        baos.write(buffer, 0, i);
+                    }
+                }
+
+                files.put(entry.getName(), baos.toByteArray());
+                zipInput.closeEntry();
+            }
+        }
+
+
+    }
+
 }

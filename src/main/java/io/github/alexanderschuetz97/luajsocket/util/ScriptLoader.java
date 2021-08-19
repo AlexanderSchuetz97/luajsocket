@@ -11,6 +11,8 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 /**
  * Utility to load the precompiled lua scripts.
@@ -38,16 +40,49 @@ public class ScriptLoader {
         init();
     }
 
-    protected URLClassLoader getClassLoader() {
-        URL url = ScriptLoader.class.getResource("/luasocket/compiled.zip");
+    protected ClassLoader getClassLoader() {
+        InputStream url = ScriptLoader.class.getResourceAsStream("/luasocket/compiled.zip");
         if (url == null) {
             throw new LuaError("resource /luasocket/compiled.zip is missing");
         }
-        return new URLClassLoader(new URL[]{url}, ScriptLoader.class.getClassLoader());
+
+        Map<String, byte[]> files;
+        try {
+            files = Util.readZipFile(url);
+        } catch (Exception exc) {
+            throw new LuaError("Error reading resource /luasocket/compiled.zip");
+        }
+
+
+        return new BACL(files);
+    }
+
+    protected static class BACL extends ClassLoader {
+
+        private final Map<String, byte[]> files;
+
+        public BACL(Map<String, byte[]> files) {
+            super(ScriptLoader.class.getClassLoader());
+            this.files = files;
+        }
+
+        @Override
+        public Class findClass(String classname) throws ClassNotFoundException {
+            //We dont have directories in the zip so this should be fine...
+            byte[] bytes = files.get(classname+".class");
+            if (bytes != null) {
+                return defineClass(classname, bytes, 0, bytes.length);
+            }
+            return super.findClass(classname);
+        }
+
+
+
+
     }
 
     protected void init() {
-       URLClassLoader urlClassLoader = getClassLoader();
+       ClassLoader urlClassLoader = getClassLoader();
         try {
             loaded.put("ftp.lua", (Class<? extends LuaFunction>) Class.forName("ftp", true, urlClassLoader));
             loaded.put("headers.lua", (Class<? extends LuaFunction>) Class.forName("headers", true, urlClassLoader));
