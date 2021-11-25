@@ -2,8 +2,8 @@
 Luajsocket is a port of the luasocket library to luaj. It allows for easy socket communication inside lua scripts running in a luaj vm.
 
 ## License
-Luajsocket is released under the GNU General Public License Version 3. <br>
-A copy of the GNU General Public License Version 3 can be found in the COPYING file.<br>
+Luajsocket is released under the GNU Lesser General Public License Version 3. <br>
+A copy of the GNU Lesser General Public License Version 3 can be found in the COPYING & COPYING.LESSER files.<br>
 
 Luajsocket contains components sourced from the luasocket library. <br>
 Those components are all contained within the folder "src/main/lua/luasocket".<br>
