@@ -23,7 +23,7 @@ Maven:
 <dependency>
     <groupId>io.github.alexanderschuetz97</groupId>
     <artifactId>luajsocket</artifactId>
-    <version>0.1.2</version>
+    <version>0.1.3</version>
 </dependency>
 ````
 
