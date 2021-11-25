@@ -14,7 +14,7 @@
 // GNU Lesser General Public License for more details.
 //
 // A copy of the GNU Lesser General Public License should be provided
-// in the COPYING file in top level directory of luajsocket.
+// in the COPYING & COPYING.LESSER files in top level directory of luajsocket.
 // If not, see <https://www.gnu.org/licenses/>.
 //
 package io.github.alexanderschuetz97.luajsocket.udp.lua;
